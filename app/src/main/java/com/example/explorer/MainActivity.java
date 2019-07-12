@@ -14,6 +14,7 @@ import android.widget.SearchView;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -48,7 +49,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         fragmentList = new ArrayList<>();
         homeFragment = new HomeFragment();
         fragmentList.add(homeFragment);
-        fragmentList.add(currentFrag);
+        currentFrag = homeFragment;
         //fragIndex = fragmentList.size() - 1;
         ImageView imageView = findViewById(R.id.imageView);
         toolbar = findViewById(R.id.toolbar);
@@ -61,9 +62,14 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         fragmentTransaction.add(R.id.frame_layout, currentFrag).commit();
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+    }
 
     public void performFragTransaction(Fragment fragment) {
-        fragmentManager.beginTransaction().replace(R.id.frame_layout, fragment).commit();
+        fragmentManager.beginTransaction().replace(R.id.frame_layout, fragment).addToBackStack(null)
+            .commit();
     }
 
     @Override
@@ -79,7 +85,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         searchView.setOnCloseListener(new SearchView.OnCloseListener() {
             @Override
             public boolean onClose() {
-                ((DirectoryFragView) currentFrag).refreshRecyclerAdapter(Arrays.asList(new File(sharedPreferences.getString(CURRENT_DIRECTORY, Environment.getExternalStorageDirectory().toString())).listFiles()));
+                ((FileBrowserFragment) currentFrag).refreshRecyclerAdapter(Arrays.asList(new File(sharedPreferences.getString(CURRENT_DIRECTORY, Environment.getExternalStorageDirectory().toString())).listFiles()));
                 searchItem.collapseActionView();
                 return false;
             }
@@ -94,12 +100,12 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
                 Toast.makeText(context, "Undo Selected", Toast.LENGTH_SHORT).show();
                 return true;
             case R.id.redo_menu_item:
-                Toast.makeText(context, "Redo Selected", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, " Selected", Toast.LENGTH_SHORT).show();
                 return true;
             case R.id.toggle_grid_list:
                 listOrGrid = !listOrGrid;
                 editor.putBoolean(LIST_OR_GRID, listOrGrid).commit();
-                ((DirectoryFragView) currentFrag).toggleLayoutManager(listOrGrid);
+                ((FileBrowserFragment) currentFrag).toggleLayoutManager(listOrGrid);
                 menuItem.setTitle(listOrGrid ? "Grid View" : "List View");
             case R.id.app_bar_search:
                 return false;
@@ -117,20 +123,21 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
     @Override
     public boolean onQueryTextChange(String newText) {
-        ((DirectoryFragView) currentFrag).performSearch(newText);
+        ((FileBrowserFragment) currentFrag).performSearch(newText);
         return true;
     }
 
     @Override
     public void onBackPressed() {
-        currentFrag = (DirectoryFragView) getSupportFragmentManager().findFragmentById(R.id.frame_layout);
+        currentFrag = (FileBrowserFragment) getSupportFragmentManager().findFragmentById(R.id.frame_layout);
         //The List of files to be used as a 'backstack' for the Fragment, soon to be a FragmentList
-        List<File> backStack = ((DirectoryFragView)currentFrag).getBackStack();
+        List<File> backStack = ((FileBrowserFragment)currentFrag).getBackStack();
         if(backStack.size() > 1) {
             File file = backStack.get(backStack.size() - 2);
             editor.putString(CURRENT_DIRECTORY, file.toString()).commit();
-            ((DirectoryFragView) currentFrag).setFile(file);
-            ((DirectoryFragView) currentFrag).refreshRecyclerAdapter(Arrays.asList(file.listFiles()));
+            ((FileBrowserFragment) currentFrag).setFile(file);
+            ((TextView) ((FileBrowserFragment) currentFrag).getActivity().findViewById(R.id.current_directory)).setText(file.getAbsolutePath());
+            ((FileBrowserFragment) currentFrag).refreshRecyclerAdapter(Arrays.asList(file.listFiles()));
         } else {
             super.onBackPressed();
         }

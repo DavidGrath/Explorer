@@ -109,6 +109,7 @@ public class FileViewAdapter extends RecyclerView.Adapter<FileViewAdapter.ViewHo
 
     public void highlightSearchText(String query) {
         for (File f: fileList) {
+
         }
     }
 
@@ -191,11 +192,11 @@ public class FileViewAdapter extends RecyclerView.Adapter<FileViewAdapter.ViewHo
             //SharedPreferences.Editor editor = preferences.edit();
             //editor.putString(CURRENT_DIRECTORY, file.toString()).commit();
             if ((file.isDirectory())) {
-                imageView.setImageResource(R.drawable.folders_documents_folder_icon);
+                imageView.setImageResource(R.drawable.folder);
             } else {
                 int resID = MimeResolver.getResourceID(file, context);
                 if (resID == 0) {
-                    imageView.setImageResource(R.drawable.folders_os_documents_metro_icon);
+                    imageView.setImageResource(R.drawable.file);
                 } else if(resID == -1) {
                     imageView.setImageDrawable(MimeResolver.icon);
                 } else {

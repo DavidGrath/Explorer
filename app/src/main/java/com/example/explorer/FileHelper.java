@@ -48,7 +48,7 @@ public class FileHelper {
         }
         FileInputStream fileInputStream;
         FileOutputStream fileOutputStream;
-        String destinationFile = to.getAbsolutePath() + "/" + from.getName();
+        String destinationFile = to.getAbsolutePath() + "/" + from.getName()+ "(1)";
         byte[] byteArray = new byte[(int) from.length()];
 
         try {
@@ -61,8 +61,7 @@ public class FileHelper {
             fileOutputStream = new FileOutputStream(temp);
             fileOutputStream.write(byteArray);
         } catch (IOException e) {
-            System.out.println("");
-            Log.d("FileHelper class", "Copy failed");
+            Log.d("\nFileHelper class", "Copy failed");
             e.printStackTrace();
         }
     }

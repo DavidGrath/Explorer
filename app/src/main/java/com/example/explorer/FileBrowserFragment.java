@@ -16,7 +16,6 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
-import android.util.Log;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -24,6 +23,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -34,9 +34,9 @@ import java.util.List;
 import static com.example.explorer.Constants.CURRENT_DIRECTORY;
 import static com.example.explorer.Constants.LIST_OR_GRID;
 
-public class DirectoryFragView extends Fragment implements FileViewAdapter.OnItemLongClickListener, FileViewAdapter.OnItemClickListener, ActionMode.Callback {
+public class FileBrowserFragment extends Fragment implements FileViewAdapter.OnItemLongClickListener, FileViewAdapter.OnItemClickListener, ActionMode.Callback {
 
-    private DirectoryFragView directoryFragView = this;
+    private FileBrowserFragment fileBrowserFragment = this;
     private RecyclerView recyclerView;
     private List<File> fileList, selectedFiles, searchList, backStack;
     private File file, destDir;
@@ -52,9 +52,10 @@ public class DirectoryFragView extends Fragment implements FileViewAdapter.OnIte
     int actionModeCount;
     boolean actionModeFlag;
     ItemTouchHelper.SimpleCallback simpleCallback;
-    private int requestCode = 100;
+    private final int REQUESTCODE = 100;
+    private final int BT_REQ_CODE = 50;
 
-    public DirectoryFragView() {
+    public FileBrowserFragment() {
     }
 
     public void setFile(File file) {
@@ -88,7 +89,7 @@ public class DirectoryFragView extends Fragment implements FileViewAdapter.OnIte
                 //FileHelper.copyFile(fromFile, toFile);
                 //int backColor = target.itemView;
                 if(!actionModeFlag) {
-                    actionMode = mainActivity.startActionMode(directoryFragView);
+                    actionMode = mainActivity.startActionMode(fileBrowserFragment);
                     fileViewAdapter.toggleChecked(from);
                 }
                 //fileViewAdapter.toggleChecked(from);
@@ -106,39 +107,50 @@ public class DirectoryFragView extends Fragment implements FileViewAdapter.OnIte
         //recyclerView.setEmptyView(LayoutInflater.from(context).inflate(R.layout.empty_directory_view, null));
         editor = preferences.edit();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && mainActivity.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE};
-            requestPermissions(permissions, requestCode);
+            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUESTCODE);
         } else {
             editor.putString(CURRENT_DIRECTORY, Environment.getExternalStorageDirectory().getAbsolutePath()).commit();
-        }
 
-        //File f = Environment.getExternalStorageDirectory();
-        fileList = file.isDirectory()? Arrays.asList(file.listFiles()): Arrays.asList(file);//getContext().getFilesDir().listFiles());//new File("storage").listFiles());
-        backStack = new ArrayList<>();
-        backStack.add(file);
-        if(recyclerView.getAdapter() == null) {
-            fileViewAdapter = new FileViewAdapter(fileList);
-        } else {
-            fileViewAdapter = (FileViewAdapter) recyclerView.getAdapter();
+            //File f = Environment.getExternalStorageDirectory();
+            fileList = file.isDirectory() ? Arrays.asList(file.listFiles()) : Arrays.asList(file);//getContext().getFilesDir().listFiles());//new File("storage").listFiles());
+            backStack = new ArrayList<>();
+            backStack.add(file);
+            ((TextView)v.findViewById(R.id.current_directory)).setText(file.getAbsolutePath());
+            fileViewAdapter = recyclerView.getAdapter() == null ? new FileViewAdapter(fileList) : (FileViewAdapter) recyclerView.getAdapter();
+            fileViewAdapter.setOnItemClickListener(this);
+            fileViewAdapter.setOnItemLongClickListener(this);
+            toggleLayoutManager(preferences.getBoolean(LIST_OR_GRID, false));
+            itemTouchHelper.attachToRecyclerView(recyclerView);
+            recyclerView.setAdapter(fileViewAdapter);
         }
-        fileViewAdapter.setOnItemClickListener(this);
-        fileViewAdapter.setOnItemLongClickListener(this);
-        toggleLayoutManager(preferences.getBoolean(LIST_OR_GRID, false));
-        itemTouchHelper.attachToRecyclerView(recyclerView);
-        recyclerView.setAdapter(fileViewAdapter);
         return  v;
     }
 
     @Override
+    public void onPause() {
+        super.onPause();
+    }
+
+    @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == this.requestCode) {
+        if (requestCode == this.REQUESTCODE) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 editor.putString(CURRENT_DIRECTORY, Environment.getExternalStorageDirectory().getAbsolutePath()).commit();
+
+                fileList = file.isDirectory() ? Arrays.asList(file.listFiles()) : Arrays.asList(file);//getContext().getFilesDir().listFiles());//new File("storage").listFiles());
+                backStack = new ArrayList<>();
+                backStack.add(file);
+                fileViewAdapter = recyclerView.getAdapter() == null ? new FileViewAdapter(fileList) : (FileViewAdapter) recyclerView.getAdapter();
+                fileViewAdapter.setOnItemClickListener(this);
+                fileViewAdapter.setOnItemLongClickListener(this);
+                toggleLayoutManager(preferences.getBoolean(LIST_OR_GRID, false));
+                recyclerView.setAdapter(fileViewAdapter);
             } else {
                 Toast.makeText(context, "Until you grant the permission, I cannot list the files", Toast.LENGTH_SHORT)
                         .show();
             }
         }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     public void toggleLayoutManager(boolean listOrGrid) {
@@ -169,25 +181,39 @@ public class DirectoryFragView extends Fragment implements FileViewAdapter.OnIte
     public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
         switch (item.getItemId()) {
             case R.id.cab_main_copy:
-                Toast.makeText(context, "Copy Clicked!", Toast.LENGTH_SHORT).show();
                 copyMethod();
                 return true;
             case R.id.cab_main_cut:
-                Toast.makeText(context, "Cut Clicked!", Toast.LENGTH_SHORT).show();
                 cutMethod();
                 return true;
+            case R.id.cab_main_share:
+                shareMethod();
+                return true;
+            case R.id.cab_main_delete:
+                deleteMethod();
         }
         return false;
     }
 
     private void copyMethod() {
-        destDir = new File( Environment.getExternalStorageDirectory().toString() + "/Newolder");
+        destDir = new File( preferences.getString(CURRENT_DIRECTORY, Environment.getExternalStorageDirectory().getAbsolutePath()) + "groot.svg");
         FileHelper.copyFiles((ArrayList<File>) selectedFiles, destDir);
     }
 
     private void cutMethod() {
         destDir = new File(Environment.getExternalStorageDirectory().toString());
         FileHelper.cutFiles((ArrayList<File>) selectedFiles, destDir);
+    }
+
+    private void shareMethod() {
+        for(File f: fileList) {
+            ConnectionHelper.activity = getActivity();
+            ConnectionHelper.share(f, BT_REQ_CODE);
+        }
+    }
+
+    private void deleteMethod() {
+        FileHelper.deleteFiles((ArrayList<File>) selectedFiles);
     }
 
     @Override
@@ -284,15 +310,11 @@ public class DirectoryFragView extends Fragment implements FileViewAdapter.OnIte
                 } else {
                     backStack.add(file);
                     fileList = Arrays.asList(file.getAbsoluteFile().listFiles());
+                    ((TextView) this.getActivity().findViewById(R.id.current_directory)).setText(file.getAbsolutePath());
                     refreshRecyclerAdapter(fileList);
-                    /*DirectoryFragView fragView = new DirectoryFragView();
-                     FragmentTransaction transaction = directoryFragView.getFragmentManager().beginTransaction();
-                     mainActivity.fragmentList.add(fragView);
-                     mainActivity.fragIndex++;
-                     transaction.add(mainActivity.fragmentList.get(mainActivity.fragIndex), file.getName()).replace(R.id.frame_layout, directoryFragView).addToBackStack(null).commit();*/
                 }
             } else {
-                Intent intent = new Intent(Intent.ACTION_VIEW);
+                Intent intent = new Intent(Intent.ACTION_ALL_APPS);
                 intent.setData(Uri.fromFile(file));
 
                 if (intent.resolveActivity(context.getPackageManager()) != null)
@@ -307,15 +329,4 @@ public class DirectoryFragView extends Fragment implements FileViewAdapter.OnIte
         fileViewAdapter.setOnItemLongClickListener(this);
         fileViewAdapter.notifyDataSetChanged();
     }
-
-    /*public void onActivityBackPressed() {
-        file = file.getParentFile();
-        System.out.println(file.toString());
-        fileList = Arrays.asList(file.listFiles());
-        DirectoryFragView fragView = fragmentList;
-        recyclerView.setAdapter(adapter);
-        fragView.setGridView(recyclerView);
-        fragmentList.getFragmentManager().beginTransaction().replace(R.id.frame_layout, fragView).commit();
-    }*/
-
 }

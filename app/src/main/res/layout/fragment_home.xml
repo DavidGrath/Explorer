@@ -12,41 +12,70 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <LinearLayout
-            android:id="@+id/linearLayout"
+        <Button
+            android:id="@+id/internal_storage_button"
             android:layout_width="wrap_content"
             android:layout_height="50dp"
             android:layout_marginTop="100dp"
             android:orientation="vertical"
+            android:text="Internal Storage"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintTop_toTopOf="parent" />
 
-            <Button
-                android:id="@+id/internal_storage_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Internal Storage" />
-        </LinearLayout>
-
-        <LinearLayout
+        <Button
+            android:id="@+id/external_storage_button"
             android:layout_width="wrap_content"
-            android:layout_height="50dp"
-            android:layout_marginTop="1dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="26dp"
             android:orientation="vertical"
+            android:text="External Storage"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.498"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/linearLayout"
-            app:layout_constraintVertical_bias="0.041">
+            app:layout_constraintTop_toBottomOf="@+id/internal_storage_button"
+            app:layout_constraintVertical_bias="0.041" />
 
-            <Button
-                android:id="@+id/external_storage_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="External Storage" />
-        </LinearLayout>
+        <TextView
+            android:id="@+id/internal_storage_size_left"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="XXX bytes left"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/internal_storage_button" />
+
+        <ProgressBar
+            android:id="@+id/internal_indicator"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_width="150dp"
+            android:layout_height="5dp"
+            style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+            app:layout_constraintTop_toBottomOf="@+id/internal_storage_size_left"
+            android:layout_marginTop="10dp"/>
+        <ProgressBar
+            android:id="@+id/external_indicator"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_width="150dp"
+            android:layout_height="5dp"
+            style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+            android:indeterminate="false"
+            app:layout_constraintTop_toBottomOf="@+id/external_storage_size_left"
+            android:layout_marginTop="10dp"/>
+
+        <TextView
+            android:id="@+id/external_storage_size_left"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="XXX bytes left"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/external_storage_button" />
     </android.support.constraint.ConstraintLayout>
 
 </RelativeLayout>

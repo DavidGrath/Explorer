@@ -12,4 +12,13 @@
         android:icon="?attr/actionModeCopyDrawable"
         android:title="Copy"
         app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/cab_main_share"
+        android:icon="@android:drawable/ic_menu_share"
+        android:title="Share"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/cab_main_delete"
+        android:title="Delete"
+        app:showAsAction="ifRoom" />
 </menu>
